@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <link href="{{ url_for('static', path='/admin/css/tabler.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', path='/admin/css/tabler-flags.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', path='/admin/css/tabler-payments.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', path='/admin/css/tabler-vendors.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', path='/admin/css/tabler-icons.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', path='/admin/css/fontawesome.min.css') }}" rel="stylesheet">
+    {% if request.app.favicon_url %}
+        <link rel="icon" href="{{ request.app.favicon_url }}">
+    {% endif %}
+    <script src="{{ url_for('static', path='/admin/js/choices.js') }}"></script>
+    <script src="{{ url_for('static', path='/admin/js/tabler.min.js') }}"></script>
+    <script src="{{ url_for('static', path='/admin/js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', path='/admin/js/moment.min.js') }}"></script>
+    {% block head %}
+    {% endblock %}
+    <title>{{ page_title }}</title>
+</head>
+{% block outer_body %}
+    <body>
+    {% block body %}
+    {% endblock %}
+    </body>
+{% endblock %}
+</html>

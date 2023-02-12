@@ -1,0 +1,85 @@
+version: "3.9"
+services:
+  fast_api:
+    ports:
+      - "8000:8000"
+    build:
+      dockerfile: ./docker/app/Dockerfile
+      context: ../
+    command: ["poetry", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      - ../:/opt/app
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      - POSTGRES_SERVER=host.docker.internal
+      - TELEMETRY_AGENT_HOST=host.docker.internal
+      - REDIS_SERVER=host.docker.internal
+
+  db:
+    image: postgres:12.0-alpine
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD", "psql" ,"-U", "postgres", "-w", "-c", "SELECT 1;" ]
+      timeout: 5s
+      retries: 3
+    volumes:
+      - /Users/dinar/Projects/postgresql/data/:/var/lib/postgresql/data/
+      - /Users/dinar/Projects/postgresql/log/:/var/log/postgresql/
+    env_file:
+      - ../.env
+
+  fast_api_nginx:
+    build: ./nginx
+    volumes:
+      - ../:/opt/app
+    ports:
+      - 80:80
+    depends_on:
+      - fast_api
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.27
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "6831:6831"
+      - "5778:5778"
+      - "9411:9411"
+      - "14250:14250"
+      - "14268:14268"
+      - "16686:16686"
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+
+  prometheus:
+    image: prom/prometheus:latest
+    command: [ "--config.file=/etc/prometheus.yaml" ]
+    volumes:
+      - ./grafana/prometheus.yaml:/etc/prometheus.yaml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./grafana/dashboard.json:/var/lib/grafana/dashboard/dashboard.json
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"
